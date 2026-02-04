@@ -1,0 +1,5 @@
+d False
+p False
+pl True
+hg False
+ss False
