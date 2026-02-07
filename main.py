@@ -1,4 +1,4 @@
-import openpyxl
+import openpyxl, Pokemon
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import messagebox
@@ -787,13 +787,13 @@ def dexEntryWindow(dex):
 
 
 intro, settings, dexEntry = None, None, [None for _ in range(494)] #
-def valueErrorFix():
-    with open("position.txt", "w") as file:
+def valueErrorFix(filePath):
+    with open(filePath, "w") as file:
         file.write("1")
         position = 1
 
-def fixEmptyLastWindow():
-    with open("lastwindow.txt", "w") as file:
+def fixEmptyLastWindow(filePath):
+    with open(filePath, "w") as file:
         file.write(lastwindow)
 
 def checkGames():
@@ -820,7 +820,7 @@ logos = {
 
 with open("lastwindow.txt") as file:
     if os.path.getsize("lastwindow.txt") == 0:
-        fixEmptyLastWindow()
+        fixEmptyLastWindow("lastwindow.txt")
     else:
         for line in file:
             if line == "checklist".lower():
@@ -835,7 +835,7 @@ with open("position.txt") as file:
         try:
             position = int(line)
         except ValueError:
-            valueErrorFix()
+            valueErrorFix("position.txt")
 
     if position not in [1,53,105,157,209,261,313,365,417,469]:
         position = 1
