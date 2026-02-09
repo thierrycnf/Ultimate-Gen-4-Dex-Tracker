@@ -1,4 +1,4 @@
-import openpyxl, Pokemon, Setup
+import openpyxl, Pokemon, Setup, glob
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import messagebox
@@ -12,7 +12,7 @@ from customtkinter import *
 #pokeball is 0
 #greatball is 1
 #ultraball is 2
-global logos, intro, settings, dexEntry, logoButtons, currentTheme, labels, images, ctkWidgets, tkButtons, position
+
 labels, images, ctkButtons, tkButtons, ctkEntries = set(), set(), set(), set(), set()
 
 
@@ -55,7 +55,7 @@ def grey(game):
 
 
 def changeTheme():
-    global main, settings, dexEntry, labels, images, ctkButtons, settings, settingsButton, settingsDict, currentTheme, logoButtons, leftArrowButton, rightArrowButton, upArrowButton, downArrowButton, leftArrows, rightArrows, downArrows, upArrows, tkButtons, ctkEntries, images
+    global main, settings, dexEntry, labels, images, ctkButtons, settings, settingsButton, settingsDict, currentTheme, logoButtons, leftArrowButton, rightArrowButton, upArrowButton, downArrowButton, leftArrows, rightArrows, downArrows, upArrows, tkButtons, ctkEntries, images, dexWindowLeftArrowButton, dexWindowRightArrowButton
     #settings.configure(fg_color=primary[currentTheme])
     main.configure(fg_color=Setup.primary[currentTheme])
     settings.configure(fg_color = Setup.primary[currentTheme])
@@ -90,6 +90,14 @@ def changeTheme():
         upArrowButton.configure(image=upArrows[currentTheme], bg=Setup.primary[currentTheme], activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
         downArrowButton.configure(image=downArrows[currentTheme], bg=Setup.primary[currentTheme], activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
     except AttributeError:
+        pass
+
+    try:
+        dexWindowLeftArrowButton.configure(image=leftArrows[currentTheme], bg=Setup.primary[currentTheme],
+                                activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
+        dexWindowRightArrowButton.configure(image=rightArrows[currentTheme], bg=Setup.primary[currentTheme],
+                                  activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
+    except NameError:
         pass
 
     #leftArrowButton.configure(image=leftArrows[currentTheme], bg=primary[currentTheme], activebackground=primary[currentTheme], highlightthickness=0, borderwidth=0)
@@ -148,7 +156,7 @@ def settingsWindow():
 
 
 
-        def confirm():
+        def confirmSettings():
             global currentTheme
             if Setup.checkGames():
                 theme = comboBox.get()
@@ -192,7 +200,7 @@ def settingsWindow():
         gameLabel = tk.Label(settings, text = "Games", font = ("Pokémon DS Font", 20), bg = Setup.primary[currentTheme], fg = Setup.secondary[currentTheme])
         gameLabel.place(relx = .5, rely = .4, anchor = "center")
 
-        confirmButton = ctk.CTkButton(settings, command = confirm, text = "Confirm", font=("Pokémon DS Font", 25), bg_color = Setup.primary[currentTheme], fg_color = Setup.secondary[currentTheme], hover_color = Setup.tertiary[currentTheme], text_color = "black")
+        confirmButton = ctk.CTkButton(settings, command = confirmSettings, text = "Confirm", font=("Pokémon DS Font", 25), bg_color = Setup.primary[currentTheme], fg_color = Setup.secondary[currentTheme], hover_color = Setup.tertiary[currentTheme], text_color = "black")
         confirmButton.place(relx = .5, rely = .85, anchor = "center")
 
 
@@ -240,8 +248,8 @@ def introWindow():
 
 
     #function to write True/False state of pokemon games to the data file
-    def confirm():
-        if checkGame("games.txt"):
+    def confirmIntro():
+        if Setup.checkGames():
             with open("games.txt", "w") as file:
 
                 for key, value in Setup.logos.items():
@@ -266,8 +274,8 @@ def introWindow():
     change = tk.Label(intro, text="(You can change these later)", font=("Pokémon DS Font", 15), bg=Setup.primary[currentTheme],fg=Setup.secondary[currentTheme])
     change.place(relx=.5, rely=.4, anchor="center")
 
-    confirmb = ctk.CTkButton(master = intro, command = confirm, text = "Confirm", font=("Pokémon DS Font", 25), bg_color = Setup.primary[currentTheme], fg_color = Setup.secondary[currentTheme], hover_color = Setup.tertiary[currentTheme], text_color = "black")
-    confirmb.place(relx = .5, rely = .9, anchor = "center")
+    confirm = ctk.CTkButton(master = intro, command = confirmIntro, text = "Confirm", font=("Pokémon DS Font", 25), bg_color = Setup.primary[currentTheme], fg_color = Setup.secondary[currentTheme], hover_color = Setup.tertiary[currentTheme], text_color = "black")
+    confirm.place(relx = .5, rely = .9, anchor = "center")
 
     #testImage = tk.Button(image = logos["pl"][0], borderwidth = 0, bg = primary[currentTheme], activebackground= primary[currentTheme], highlightthickness=0, command = lambda: grey(key))
     #testImage.place(relx = .5, rely = .6, anchor = "center")
@@ -276,7 +284,7 @@ def introWindow():
 
     x = .25
     y = .6
-    for key, value in logos.items():
+    for key, value in Setup.logos.items():
         Setup.logoButtons[key] = tk.Button(intro, image = value[1], borderwidth = 0, bg = Setup.primary[currentTheme], activebackground= Setup.primary[currentTheme], highlightthickness=0, command = lambda k=key: grey(k))
         Setup.logoButtons[key].place(relx = x, rely = y)
         #print(key)
@@ -615,7 +623,7 @@ def mainWindow():
                     pass
 
                 return
-            x, y = .15, .4
+            x, y = .01, .4
             for i in range(1, 494):
                 try:
                     if searchString in pokemon[i].name[:searchLength+1]: #checks if the searchString matcheds with any pokemon names
@@ -639,9 +647,9 @@ def mainWindow():
                     pokemonButtons[i].place(relx=x, rely=y)
                 except AttributeError:
                     pass
-                x += .06
-                if x > .85:
-                    x = .15
+                x += .055
+                if x > .95:
+                    x = .01
                     y += .2
 
                 if y > .8:
@@ -719,7 +727,28 @@ def mainWindow():
     main.mainloop()
 
 def dexEntryWindow(dex):
-    global dexEntry, labels, images, backSprite, tkButtons
+    global dexEntry, labels, images, backSprite, tkButtons, dexWindowLeftArrowButton, dexWindowRightArrowButton
+    currentForm = 0
+
+    def left():
+        nonlocal currentForm
+        currentForm -= 1
+        currentForm = len(pokemon[dex].otherBack)-1 if currentForm < 0 else currentForm
+        backSprite.configure(image=pokemon[dex].otherBack[currentForm])
+
+    def right():
+        nonlocal currentForm
+        currentForm += 1
+        currentForm = 0 if currentForm > len(pokemon[dex].otherBack)-1 else currentForm
+        backSprite.configure(image=pokemon[dex].otherBack[currentForm])
+
+    def addForms(path, dex):
+        for directory in pokemon[dex].formsDirectory:
+            originalImage = Image.open(directory)
+            resizedImage = originalImage.resize((100, 90), Image.Resampling.LANCZOS)
+            pokemon[dex].otherBack.append(ImageTk.PhotoImage(resizedImage))
+        print(pokemon[dex].otherBack)
+
 
     if dexEntry[dex] is None or not dexEntry[dex].winfo_exists():
         dexEntry[dex] = ctk.CTkToplevel(main)
@@ -728,10 +757,28 @@ def dexEntryWindow(dex):
         dexEntry[dex].configure(fg_color=Setup.primary[currentTheme])
         dexEntry[dex].resizable(False, False)
         #dexEntry[dex].iconphoto(False, pokemon[dex]["icon"])
-        #dexEntry[dex].iconbitmap(f"ico files\{dex}.ico")
+        dexEntry[dex].iconbitmap(f"ico files\{1}.ico")
+
+        try:
+            [pokemon[dex].formsDirectory.append(sprite) for sprite in Setup.hasMultipleForms("back sprites", dex)]
+        except TypeError:
+            pass
+        if len(pokemon[dex].formsDirectory) > 1:
+            addForms("back sprites", dex)
+            dexWindowLeftArrowButton = tk.Button(dexEntry[dex], image=leftArrows[currentTheme], command=left,
+                                        bg=Setup.primary[currentTheme], activebackground=Setup.primary[currentTheme],
+                                        highlightthickness=0, borderwidth=0)
+            dexWindowLeftArrowButton.place(rely=.1, anchor="w")
+
+            dexWindowRightArrowButton = tk.Button(dexEntry[dex], image=rightArrows[currentTheme], command=right,
+                                         bg=Setup.primary[currentTheme], activebackground=Setup.primary[currentTheme],
+                                         highlightthickness=0, borderwidth=0)
+            dexWindowRightArrowButton.place(relx=.99, rely=.1, anchor="e")
 
         backSprite = tk.Button(dexEntry[dex], image = pokemon[dex].back, bg = Setup.primary[currentTheme], activebackground = Setup.primary[currentTheme], highlightthickness=0, borderwidth = 0)
         backSprite.place(relx = .5, rely = .2, anchor = "center")
+
+
 
         x, y = .5, .4
         titles = ["Diamond", "Pearl", "Platinum", "Heart Gold", "Soul Silver"]
@@ -749,9 +796,10 @@ def dexEntryWindow(dex):
         tkButtons.add(backSprite)
 
 
+
 intro, settings, dexEntry = None, None, [None for _ in range(494)] #
 
-def checkGame(path):
+def openWindows(path):
     with open(path) as file:
         i = 0
         check = False
@@ -791,9 +839,7 @@ position = 1
 
 
 
-
-
-checkGame("games.txt")
+openWindows("games.txt")
 Setup.setPosition("position.txt")
 
 

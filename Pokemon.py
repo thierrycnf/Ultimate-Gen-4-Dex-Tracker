@@ -11,6 +11,8 @@ class Pokemon:
         self.icon = icon
         self.grey = grey
         self.back = back
+        self.formsDirectory = []
+        self.otherBack = []
 
     def __str__(self):
         return f"dex number: {self.dex}\nname: {self.name}\ndiamond: {self.diamond}\npearl: {self.pearl}\nplatinum: {self.platinum}\nheartgold: {self.heartgold}\nsoulsilver: {self.soulsilver}\ncaught?: {self.caught}\nicon: {self.icon}\ngrey: {self.grey}\nback: {self.back}\n"
@@ -28,3 +30,6 @@ class Pokemon:
             return self.soulsilver
         else:
             return "N/A"
+
+    def __add__(self, other):
+        return self.dex + other.dex

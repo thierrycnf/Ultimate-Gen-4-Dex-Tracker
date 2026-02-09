@@ -1,6 +1,7 @@
 from tkinter import messagebox
+from PIL import Image, ImageTk
 
-import os
+import os, glob
 
 primary = {
     "0": "#a9181e",  # Pokeball
@@ -77,3 +78,21 @@ def checkGames():
         return False
     else:
         return True
+
+def hasMultipleForms(path, dex):
+    directories = []
+    filePaths = []
+    count = 0
+
+    range = len(str(dex))
+    if range < 3:
+        return directories
+
+    pattern = f"{path}/*.png"
+
+    [filePaths.append(filePath) for filePath in glob.iglob(pattern)]
+
+    [directories.append(filePath) for filePath in filePaths if str(dex) in filePath]
+
+
+    return directories[::-1]
