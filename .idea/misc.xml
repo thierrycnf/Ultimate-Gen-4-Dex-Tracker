@@ -4,4 +4,7 @@
     <option name="sdkName" value="Python 3.9 (Ultimate Gen 4 Dex Tracker)" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (Ultimate Gen 4 Dex Tracker)" project-jdk-type="Python SDK" />
+  <component name="PyCharmProfessionalAdvertiser">
+    <option name="shown" value="true" />
+  </component>
 </project>

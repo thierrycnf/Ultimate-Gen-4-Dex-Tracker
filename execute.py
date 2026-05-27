@@ -7,7 +7,7 @@ setup(
     author = "Thierry-Cruz",
     description = "The perfect software to accompany you on your gen 4 living dex!",
     executables = [
-        Executable("windows.py",
+        Executable("Windows.py",
                    )
     ]
 
