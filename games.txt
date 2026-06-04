@@ -1,5 +1,5 @@
 d False
-p False
-pl True
-hg True
+p True
+pl False
+hg False
 ss False

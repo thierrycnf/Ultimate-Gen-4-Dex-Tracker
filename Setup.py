@@ -45,11 +45,13 @@ def getLastWindow(path):
         else:
             for line in file:
                 if line == "checklist".lower():
-                    lastwindow = "checklist"
+                    lastWindow = "checklist"
                 elif line == "dex".lower():
-                    lastwindow = "dex"
+                    lastWindow = "dex"
+    return lastWindow
 
 def setPosition(path):
+    positions = [i for i in range(1, 722, 52)]
     with open(path) as file:
         for line in file:
             try:
@@ -57,8 +59,9 @@ def setPosition(path):
             except ValueError:
                 valueErrorFix("position.txt")
 
-        if position not in [1,53,105,157,209,261,313,365,417,469]:
+        if position not in positions:
             position = 1
+        return position, positions
 
 def valueErrorFix(filePath):
     with open(filePath, "w") as file:
@@ -89,6 +92,7 @@ def hasMultipleForms(path, dex):
         return directories
 
     pattern = f"{path}/*.png"
+    print(pattern)
 
     [filePaths.append(filePath) for filePath in glob.iglob(pattern)]
 
@@ -96,4 +100,6 @@ def hasMultipleForms(path, dex):
 
 
     return directories[::-1]
+
+
 

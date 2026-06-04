@@ -1,4 +1,4 @@
-import openpyxl, Pokemon, Setup, glob
+import openpyxl, Pokemon, Setup, pygame
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import messagebox
@@ -14,13 +14,15 @@ from customtkinter import *
 #ultraball is 2
 
 labels, images, ctkButtons, tkButtons, ctkEntries = set(), set(), set(), set(), set()
+currentSearch = None
 
 
 
-lastwindow = Setup.getLastWindow("lastwindow.txt")
+lastWindow = Setup.getLastWindow("lastwindow.txt")
 wbObj = openpyxl.load_workbook("National Dex Guide 1.xlsx")
 sheetObj = wbObj.active
-
+position = Setup.setPosition("position.txt")[0]
+lastPosition = Setup.setPosition("position.txt")[1]
 
 
 #dsFont = font.Font(family = "Pokemon DS", size = 20)
@@ -57,7 +59,7 @@ def grey(game):
 def changeTheme():
     global main, settings, dexEntry, labels, images, ctkButtons, settings, settingsButton, settingsDict, currentTheme, logoButtons, \
         leftArrowButton, rightArrowButton, upArrowButton, downArrowButton, leftArrows, rightArrows, downArrows, upArrows, tkButtons, ctkEntries, \
-        images, dexWindowLeftArrowButton, dexWindowRightArrowButton
+        images, dexWindowLeftArrowButton, dexWindowRightArrowButton, filterButton
     #settings.configure(fg_color=primary[currentTheme])
     main.configure(fg_color=Setup.primary[currentTheme])
     settings.configure(fg_color = Setup.primary[currentTheme])
@@ -78,7 +80,7 @@ def changeTheme():
                              highlightthickness=0, borderwidth=0)
 
 
-    if lastwindow == "checklist":
+    if lastWindow == "checklist":
         try:
             rightArrowButton.configure(image=rightArrows[currentTheme], bg=Setup.primary[currentTheme],
                                        activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
@@ -87,6 +89,12 @@ def changeTheme():
     else:
         try:
             leftArrowButton.configure(image=leftArrows[currentTheme], bg=Setup.primary[currentTheme],
+                                      activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
+        except TclError:
+            pass
+
+        try:
+            filterButton.configure(image=filters[currentTheme], bg=Setup.primary[currentTheme],
                                       activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
         except TclError:
             pass
@@ -155,7 +163,7 @@ def settingsWindow():
         settings.geometry(("300x200"))
         settings.configure(fg_color=Setup.primary[currentTheme])
         settings.resizable(False, False)
-        settings.iconbitmap(f"ico files\{1}.ico")
+        #.iconbitmap(f"ico files\{1}.ico")
 
     with open ("games.txt") as file:
         for (key, value), line in zip(Setup.logos.items(), file):
@@ -323,8 +331,10 @@ def introWindow():
 
 def mainWindow():
     global logos, main, images, labels, ctkButtons, settingsDict, settingsButton, leftArrows, rightArrows, upArrows, downArrows, \
-        checklistWidgets, dexWidgets, leftArrowButton, rightArrowButton,  downArrowButton, upArrowButton, ctkEntries, pokemon, currentWindow
-    settingsDict, leftArrows, rightArrows, upArrows, downArrows = {}, {}, {}, {}, {}
+        checklistWidgets, dexWidgets, leftArrowButton, rightArrowButton,  downArrowButton, upArrowButton, ctkEntries, pokemon, currentWindow, \
+        filters
+
+    settingsDict, leftArrows, rightArrows, upArrows, downArrows, filters = {}, {}, {}, {}, {}, {}
     upArrowButton, downArrowButton = None, None
     currentWindow = None
 
@@ -353,8 +363,7 @@ def mainWindow():
     main.tk.call("tk", "scaling", 2.0)
     main.resizable(width = True, height = True)
     main.configure(fg_color=Setup.primary[currentTheme])
-    #main.iconphoto(False, tk.PhotoImage(file = "hg.png"))
-    main.iconbitmap(f"ico files\{1}.ico")
+    #main.iconbitmap(f"ico files\{1}.ico")
 
     for setting in range(len(Setup.primary)):
         originalImage = Image.open(f"settings\{setting}.png")
@@ -380,6 +389,11 @@ def mainWindow():
         originalImage = Image.open(f"up\{upArrow}.png")
         resizedImage = originalImage.resize((50, 45), Image.Resampling.LANCZOS)
         upArrows[str(upArrow)] = ImageTk.PhotoImage(resizedImage)
+
+    for filter in range(len(Setup.primary)):
+        originalImage = Image.open(f"sorting\{filter}.png")
+        resizedImage = originalImage.resize((50, 50), Image.Resampling.LANCZOS)
+        filters[str(filter)] = ImageTk.PhotoImage(resizedImage)
 
     images.add("left")
     images.add("right")
@@ -427,6 +441,8 @@ def mainWindow():
                                        ImageTk.PhotoImage(resizedImage),
                                        ImageTk.PhotoImage(resizedGreyImage),
                                        ImageTk.PhotoImage(resizedBackImage)))
+
+        main.iconphoto(False, pokemon[1].icon)
         #indexes
         #0 - dex No
         #1 - name
@@ -469,7 +485,7 @@ def mainWindow():
     def checklist(root):
         global checklistWidgets, labels, settingsButton, rightArrowButton, leftArrowButton, upArrowButton, downArrowButton, settingsDict, leftArrows, \
             rightArrows, upArrows, downArrows, tkButtons, pokemonButtons, position, destroyedUp, destroyedDown, currentPokemon, testPosition, \
-            lastwindow, checklistLabel, currentWindow
+            lastWindow, checklistLabel, currentWindow
         currentWindow = "checklist"
 
         checklistLabel = tk.Label(main, text = "Ultimate Checklist", font = ("Pokémon DS Font", 30), bg = Setup.primary[currentTheme],
@@ -571,7 +587,13 @@ def mainWindow():
 
         #testPosition = tk.Label(main, text = position, font = ("Pokémon DS Font", 25), bg = primary[currentTheme], fg = secondary[currentTheme])
         #testPosition.place(relx = .04, rely = .5)
+        if upArrowButton:
+            upArrowButton.destroy()
+            upArrowButton = None
 
+        if downArrowButton:
+            downArrowButton.destroy()
+            downArrowButton = None
 
         upArrowButton = tk.Button(main, image = upArrows[currentTheme], command = scrollUp, bg = Setup.primary[currentTheme],
                                   activebackground = Setup.primary[currentTheme], highlightthickness=0, borderwidth = 0 )
@@ -608,6 +630,8 @@ def mainWindow():
         checklistWidgets.add(checklistLabel)
         checklistWidgets.add(settingsButton)
         checklistWidgets.add(rightArrowButton)
+        checklistWidgets.add(upArrowButton)
+        checklistWidgets.add(downArrowButton)
         def tick(dex):
             try: #checking if the spreadsheet is open and if it is, give an error message
                 wbObj.save("National Dex Guide 1.xlsx")
@@ -626,17 +650,18 @@ def mainWindow():
             wbObj.save("National Dex Guide 1.xlsx")
             return True
 
-        lastwindow = "checklist"
+        lastWindow = "checklist"
         with open("lastwindow.txt", "w") as file:
             file.write("checklist")
 
     def dex(root):
-        global dexWidgets, labels, leftArrowButton, settingsButton, ctkButtons, ctkEntries, leftArrows, upArrows, downArrows, lastwindow, \
-            currentPokemon, pokemonButtons, dexWidgets, dexLabel, currentWindow
+        global dexWidgets, labels, leftArrowButton, settingsButton, ctkButtons, ctkEntries, leftArrows, upArrows, downArrows, lastWindow, \
+            currentPokemon, pokemonButtons, dexWidgets, dexLabel, currentWindow, upArrowButton, downArrowButton, filterButton, currentSearch
          # Page increases/decreases by 1 when you scroll up/down respectively. Corresponds with dexPositions index
         currentWindow = "dex"
         currentPokemon = None #keeps track of all the pokemon currently on screen
         pokemonButtons = [None for _ in range(494)]
+
 
         def checkSearchTextFile(path):
              with open(path) as file:
@@ -648,20 +673,21 @@ def mainWindow():
                 file.write(searchString.lower())
 
 
+
         def search(*args, start = 1, dexPositions = None, page = 0):#OH MY FUCKING GOD I SOMEHOW MADE THIS WORK LMAO
             global position, pokemonButtons, currentPokemon, downArrowButton, upArrowButton, dexPosition, dexPosition
 
-
-
-
+            finalPokemon, displayUpArrow, displayDownArrow = False, start != 1, False
             finalPokemon = False
             if dexPositions is None:
                 dexPositions = [1]
             if downArrowButton:
-                downArrowButton.place_forget()
+                downArrowButton.destroy()
+                downArrowButton = None
 
             if upArrowButton:
-                upArrowButton.place_forget()
+                upArrowButton.destroy()
+                upArrowButton = None
 
             try:
                 if currentPokemon:
@@ -675,20 +701,33 @@ def mainWindow():
                                                      #rest lowercase because that's how the names are formatted in the spreadsheet
             searchLength = len(searchString)
             #print(search in pokemon[1][1][:searchLength+1])
-            if searchString == "":
-                writeToSearchTextFile("search.txt", searchString)
-                try:
-                    if currentPokemon:
-                        [mon.destroy() for mon in currentPokemon]
-                    currentPokemon = []
-                    # print("test")
-                except AttributeError:
-                    pass
-
-                return
+            # if searchString == "":
+            #     writeToSearchTextFile("search.txt", searchString)
+            #     try:
+            #         if currentPokemon:
+            #             [mon.destroy() for mon in currentPokemon]
+            #         currentPokemon = []
+            #         # print("test")
+            #     except AttributeError:
+            #         pass
+            #
+            #     return
             x, y = .1, .4
-            finalPokemon, displayUpArrow, displayDownArrow = False, start != 1, False
+
             for i in range(start, 494):
+                if Setup.logos["d"][2] and pokemon[i].inDiamond:
+                    pass
+                elif Setup.logos["p"][2] and pokemon[i].inPearl:
+                    pass
+                elif Setup.logos["pl"][2] and pokemon[i].inPlatinum:
+                    pass
+                elif Setup.logos["hg"][2] and pokemon[i].inHeartGold:
+                    pass
+                elif Setup.logos["ss"][2] and pokemon[i].inSoulSilver:
+                    pass
+                else:
+                    print(f"I skipped {pokemon[i].name}")
+                    continue
                 try:
                     if searchString in pokemon[i].name[:searchLength+1]: #checks if the searchString matcheds with any pokemon names
                         if finalPokemon:
@@ -738,7 +777,7 @@ def mainWindow():
 
             writeToSearchTextFile("search.txt", searchString)
             dexPositions = list(dict.fromkeys(dexPositions))
-            print(dexPositions)
+
 
 
             if displayDownArrow:
@@ -746,15 +785,23 @@ def mainWindow():
                                             activebackground = Setup.primary[currentTheme], highlightthickness=0, borderwidth = 0,
                                             command = lambda: search(start=dexPositions[page + 1], dexPositions=dexPositions, page=page + 1) )
                 downArrowButton.place(relx=.99, rely=.7, anchor="e")
-                dexWidgets.add(downArrowButton)
+
+                print(displayDownArrow)
 
             if displayUpArrow:
                 upArrowButton = tk.Button(main, image = upArrows[currentTheme], bg = Setup.primary[currentTheme],
                                           activebackground = Setup.primary[currentTheme], highlightthickness=0, borderwidth = 0,
                                           command = lambda: search(start=dexPositions[page - 1], dexPositions=dexPositions, page=page - 1) )
                 upArrowButton.place(relx=.99, rely=.4, anchor="e")
-                dexWidgets.add(upArrowButton)
 
+        currentSearch = search
+        def scrollSearch(event):
+            if event.delta < 0 and downArrowButton:
+                downArrowButton.invoke()
+            elif event.delta > 0 and upArrowButton:
+                upArrowButton.invoke()
+
+        main.bind("<MouseWheel>", scrollSearch)
         dexLabel = tk.Label(main, text = "Ultimate Pokédex", font = ("Pokémon DS Font", 25), bg = Setup.primary[currentTheme],
                             fg = Setup.secondary[currentTheme])
         dexLabel.place(relx = .5, rely = .1, anchor = "center")
@@ -768,6 +815,11 @@ def mainWindow():
                                    activebackground=Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
         settingsButton.place(relx=.98, rely=.03, anchor="ne")
 
+        filterButton = tk.Button(main, command = filterWindow, image = filters[currentTheme], bg = Setup.primary[currentTheme],
+                                 activebackground = Setup.primary[currentTheme], highlightthickness=0, borderwidth=0)
+
+        filterButton.place(relx=.8, rely=.25, anchor="center")
+
         searchVar = tk.StringVar()
         searchVar.trace_add("write", search)
         searchEntry = CTkEntry(main, placeholder_text = "Enter Pokémon Name...", textvariable = searchVar, width = 250,
@@ -775,16 +827,20 @@ def mainWindow():
                                fg_color = Setup.secondary[currentTheme] )
         searchEntry.place(relx = .5, rely = .25, anchor = "center")
 
+        search()
+
+
+
+
+        # if upArrowButton:
+        #     upArrowButton.destroy()
+        #     upArrowButton = None
+        #
+        # if downArrowButton:
+        #     downArrowButton.destroy()
+        #     downArrowButton = None
 
         checkSearchTextFile("search.txt")
-
-
-
-        if upArrowButton:
-            upArrowButton.place_forget()
-
-        if downArrowButton:
-            downArrowButton.place_forget()
 
         labels.add(dexLabel)
 
@@ -795,12 +851,13 @@ def mainWindow():
         dexWidgets.add(leftArrowButton)
         dexWidgets.add(searchEntry)
         dexWidgets.add(settingsButton)
+        dexWidgets.add(filterButton)
 
-        lastwindow = "dex"
+        lastWindow = "dex"
         with open("lastwindow.txt", "w") as file:
-            file.write("dex")
+            file.write(lastWindow)
 
-    if lastwindow == "checklist":
+    if lastWindow == "checklist":
         checklist(main)
     else:
         dex(main)
@@ -829,7 +886,16 @@ def mainWindow():
 
 def dexEntryWindow(dex):
     global dexEntry, labels, images, backSprite, tkButtons, dexWindowLeftArrowButton, dexWindowRightArrowButton
+
+    print(pokemon[dex].platinum)
     currentForm = 0
+    pygame.init()
+    pygame.mixer.init()
+
+    def playCry():
+        print(pokemon[dex].cry)
+        sound = pygame.mixer.Sound(pokemon[dex].cry)
+        sound.play()
 
     def left():
         nonlocal currentForm
@@ -854,11 +920,15 @@ def dexEntryWindow(dex):
     if dexEntry[dex] is None or not dexEntry[dex].winfo_exists():
         dexEntry[dex] = ctk.CTkToplevel(main)
         dexEntry[dex].title(f"{pokemon[dex].name} | {pokemon[dex].dex}")
-        dexEntry[dex].geometry(("250x225"))
+        dexEntry[dex].geometry(("350x225"))
         dexEntry[dex].configure(fg_color=Setup.primary[currentTheme])
         dexEntry[dex].resizable(False, False)
-        #dexEntry[dex].iconphoto(False, pokemon[dex]["icon"])
-        dexEntry[dex].iconbitmap(f"ico files\{1}.ico")
+        try:
+            dexEntry[dex].iconphoto(False, pokemon[dex].icon)
+        except TclError:
+            dexEntry[dex].iconbitmap(f"ico files\{1}.ico")
+
+
 
         try:
             [pokemon[dex].formsDirectory.append(sprite) for sprite in Setup.hasMultipleForms("back sprites", dex)]
@@ -877,7 +947,7 @@ def dexEntryWindow(dex):
             dexWindowRightArrowButton.place(relx=.99, rely=.1, anchor="e")
 
         backSprite = tk.Button(dexEntry[dex], image = pokemon[dex].back, bg = Setup.primary[currentTheme],
-                               activebackground = Setup.primary[currentTheme], highlightthickness=0, borderwidth = 0)
+                               activebackground = Setup.primary[currentTheme], highlightthickness=0, borderwidth = 0, command = playCry)
         backSprite.place(relx = .5, rely = .2, anchor = "center")
 
 
@@ -898,9 +968,73 @@ def dexEntryWindow(dex):
 
         tkButtons.add(backSprite)
 
+def filterWindow():
+    global filterScreen, logos, buttons, labels, ctkButtons
+
+    if filterScreen is None or not filterScreen.winfo_exists():
+        filterScreen = ctk.CTkToplevel(main)
+        filterScreen.title("Filter Settings")
+        filterScreen.geometry(("200x200"))
+        filterScreen.configure(fg_color=Setup.primary[currentTheme])
+        filterScreen.resizable(False, False)
+
+        with open("games.txt") as file:
+            for (key, value), line in zip(Setup.logos.items(), file):
+                if "True" in line:
+                    value[2] = True
+                else:
+                    value[2] = False
+
+        def confirmSettings():
+            with open("themes.txt", "w") as file:
+                file.write(str(currentTheme))
+
+            with open("games.txt", "w") as file:
+
+                for key, value in Setup.logos.items():
+                    if value[2]:
+                        file.write(f"{key} True\n")
+                        # print("hello")
+                    else:
+                        file.write(f"{key} False\n")
+
+            if currentSearch:
+                currentSearch()
+
+            messagebox.showinfo("Confirmed!", "Changes have been confirmed!")
+
+        includeLabel = tk.Label(filterScreen, text="Include Pokemon From", font=("Pokémon DS Font", 15), bg=Setup.primary[currentTheme],
+                            fg=Setup.secondary[currentTheme])
+
+        includeLabel.place(relx=.5, rely=.2, anchor="center")
+
+        confirmButton = ctk.CTkButton(filterScreen, command=confirmSettings, text="Confirm", font=("Pokémon DS Font", 25),
+                                      bg_color=Setup.primary[currentTheme], fg_color=Setup.secondary[currentTheme],
+                                      hover_color=Setup.tertiary[currentTheme], text_color="black")
+        confirmButton.place(relx=.5, rely=.85, anchor="center")
+        x = 0
+        y = .3
+        for key, value in Setup.logos.items():
+            if value[2]:
+                Setup.logoButtons[key] = tk.Button(filterScreen, image=value[0], borderwidth=0,
+                                                   bg=Setup.primary[currentTheme],
+                                                   activebackground=Setup.primary[currentTheme], highlightthickness=0,
+                                                   command=lambda k=key: grey(k))
+            else:
+                Setup.logoButtons[key] = tk.Button(filterScreen, image=value[1], borderwidth=0,
+                                                   bg=Setup.primary[currentTheme],
+                                                   activebackground=Setup.primary[currentTheme], highlightthickness=0,
+                                                   command=lambda k=key: grey(k))
+            Setup.logoButtons[key].place(relx=x, rely=y)
+            # print(key)
+            x += .2
 
 
-intro, settings, dexEntry = None, None, [None for _ in range(494)] #
+
+        filterScreen.mainloop()
+
+
+intro, settings, dexEntry, filterScreen = None, None, [None for _ in range(494)], None #
 
 def openWindows(path):
     with open(path) as file:
@@ -938,12 +1072,12 @@ def openWindows(path):
 
 
 
-position = 1
+
 
 
 
 openWindows("games.txt")
-Setup.setPosition("position.txt")
+
 
 
 
