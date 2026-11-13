@@ -17,7 +17,6 @@ class DexApp:
 
     def __init__(self):
         self.current_theme = self.load_theme()
-        self.last_window = setup.get_last_screen("lastscreen.txt")
         self.position = setup.setPosition("position.txt")[0]
         self.last_position = setup.setPosition("position.txt")[1]
 
@@ -36,7 +35,7 @@ class DexApp:
         self.settings_dict, self.left_arrows, self.right_arrows, self.up_arrows, self.down_arrows, self.filters = [{} for _ in range(6)]
         self.up_arrow_button = self.down_arrow_button = self.left_arrow_button = self.right_arrow_button = None
         self.destroyed_up = self.destroyed_down = None
-        self.checklist_label = self.dex_label = None
+        self.checklist_label = self.dex_label = Noned
         (self.labels, self.images, self.ctk_buttons, self.tk_buttons, self.ct_entries,
          self.checklist_widgets, self.dex_widgets) = [set() for _ in range(7)]
 
@@ -205,32 +204,32 @@ class DexApp:
         for setting in range(len(setup.primary)):
             original_image = Image.open(f"settings\{setting}.png")
             resized_image = original_image.resize((50, 50), Image.Resampling.LANCZOS)
-            self.settings_dict[str(setting)] = ImageTk.PhotoImage(resized_image)
+            self.settings_dict[Theme(str(setting))] = ImageTk.PhotoImage(resized_image)
 
         for right_arrow in range(len(setup.primary)):
             original_image = Image.open(f"right\{right_arrow}.png")
             resized_image = original_image.resize((60, 45), Image.Resampling.LANCZOS)
-            self.right_arrows[str(right_arrow)] = ImageTk.PhotoImage(resized_image)
+            self.right_arrows[Theme(str(right_arrow))] = ImageTk.PhotoImage(resized_image)
 
         for left_arrow in range(len(setup.primary)):
             original_image = Image.open(f"left\{left_arrow}.png")
             resized_image = original_image.resize((60, 45), Image.Resampling.LANCZOS)
-            self.left_arrows[str(left_arrow)] = ImageTk.PhotoImage(resized_image)  #
+            self.left_arrows[Theme(str(left_arrow))] = ImageTk.PhotoImage(resized_image)  #
 
         for down_arrow in range(len(setup.primary)):
             original_image = Image.open(f"down\{down_arrow}.png")
             resized_image = original_image.resize((50, 45), Image.Resampling.LANCZOS)
-            self.down_arrows[str(down_arrow)] = ImageTk.PhotoImage(resized_image)
+            self.down_arrows[Theme(str(down_arrow))] = ImageTk.PhotoImage(resized_image)
 
         for up_arrow in range(len(setup.primary)):
             original_image = Image.open(f"up\{up_arrow}.png")
             resized_image = original_image.resize((50, 45), Image.Resampling.LANCZOS)
-            self.up_arrows[str(up_arrow)] = ImageTk.PhotoImage(resized_image)
+            self.up_arrows[Theme(str(up_arrow))] = ImageTk.PhotoImage(resized_image)
 
         for filter in range(len(setup.primary)):
             original_image = Image.open(f"sorting\{filter}.png")
             resized_image = original_image.resize((50, 50), Image.Resampling.LANCZOS)
-            self.filters[str(filter)] = ImageTk.PhotoImage(resized_image)
+            self.filters[Theme(str(filter))] = ImageTk.PhotoImage(resized_image)
 
         self.images.add("left")
         self.images.add("right")
@@ -251,13 +250,13 @@ class DexApp:
                                       fg=setup.secondary[self.current_theme])
             self.checklist_label.place(relx=.5, rely=.1, anchor="center")
 
-            settings_button = tk.Button(self.main, command=self.settings_window, image=self.settings_dict[self.current_theme.value],
+            settings_button = tk.Button(self.main, command=self.settings_window, image=self.settings_dict[self.current_theme],
                                        bg=setup.primary[self.current_theme],
                                        activebackground=setup.primary[self.current_theme], highlightthickness=0,
                                        borderwidth=0)
             settings_button.place(relx=.02, rely=.03, anchor="nw")
 
-            right_arrow_button = tk.Button(self.main, image=self.right_arrows[self.current_theme.value], command=switch_screen,
+            right_arrow_button = tk.Button(self.main, image=self.right_arrows[self.current_theme], command=switch_screen,
                                          bg=setup.primary[self.current_theme],
                                          activebackground=setup.primary[self.current_theme], highlightthickness=0,
                                          borderwidth=0)
@@ -356,10 +355,10 @@ class DexApp:
                 self.down_arrow_button.destroy()
                 self.down_arrow_button = None
 
-            self.up_arrow_button = tk.Button(self.main, image=self.up_arrows[self.current_theme.value], command=scroll_up,
+            self.up_arrow_button = tk.Button(self.main, image=self.up_arrows[self.current_theme], command=scroll_up,
                                       bg=setup.primary[self.current_theme],
                                       activebackground=setup.primary[self.current_theme], highlightthickness=0, borderwidth=0)
-            self.down_arrow_button = tk.Button(self.main, image=self.down_arrows[self.current_theme.value], command=scroll_down,
+            self.down_arrow_button = tk.Button(self.main, image=self.down_arrows[self.current_theme], command=scroll_down,
                                         bg=setup.primary[self.current_theme],
                                         activebackground=setup.primary[self.current_theme], highlightthickness=0,
                                         borderwidth=0)
