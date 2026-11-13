@@ -35,7 +35,7 @@ class DexApp:
         self.settings_dict, self.left_arrows, self.right_arrows, self.up_arrows, self.down_arrows, self.filters = [{} for _ in range(6)]
         self.up_arrow_button = self.down_arrow_button = self.left_arrow_button = self.right_arrow_button = None
         self.destroyed_up = self.destroyed_down = None
-        self.checklist_label = self.dex_label = Noned
+        self.checklist_label = self.dex_label = None
         (self.labels, self.images, self.ctk_buttons, self.tk_buttons, self.ct_entries,
          self.checklist_widgets, self.dex_widgets) = [set() for _ in range(7)]
 
