@@ -1,27 +1,28 @@
 from tkinter import messagebox
+from theme import Theme
 from PIL import Image, ImageTk
 
 import os, glob
 
 primary = {
-    "0": "#a9181e",  # Pokeball
-    "1": "#3b5998",  # Greatball
-    "2": "#282424",  # Ultraball
-    "3": "#673a8f"   # Masterball
+    Theme.POKEBALL: "#a9181e",  # Pokeball
+    Theme.GREATBALL: "#3b5998",  # Greatball
+    Theme.ULTRABALL: "#282424",  # Ultraball
+    Theme.MASTERBALL: "#673a8f"   # Masterball
 }
 
 secondary = {
-    "0": "#f7f7f7",  # Pokeball
-    "1": "#a9181e",  # Greatball
-    "2": "#f0bc2c",  # Ultraball
-    "3": "#9b0f4a"   # Masterball
+    Theme.POKEBALL: "#f7f7f7",  # Pokeball
+    Theme.GREATBALL: "#a9181e",  # Greatball
+    Theme.ULTRABALL: "#f0bc2c",  # Ultraball
+    Theme.MASTERBALL: "#9b0f4a"   # Masterball
 }
 
 tertiary = {
-    "0": "#cccbcb",  # Pokeball
-    "1": "#af141a",  # Greatball
-    "2": "#a07d1b",  # Ultraball
-    "3": "#b30f54"   # Masterball
+    Theme.POKEBALL: "#cccbcb",  # Pokeball
+    Theme.GREATBALL: "#af141a",  # Greatball
+    Theme.ULTRABALL: "#a07d1b",  # Ultraball
+    Theme.MASTERBALL: "#b30f54"   # Masterball
 }
 logos = {
     "d": [None, None, False],
@@ -38,17 +39,17 @@ logoButtons = {
     "hg": None,
     "ss": None
 }
-def getLastWindow(path):
+def get_last_screen(path):
     with open(path) as file:
         if os.path.getsize(path) == 0:
             file.write("checklist")
         else:
             for line in file:
                 if line == "checklist".lower():
-                    lastWindow = "checklist"
+                    last_screen = "checklist"
                 elif line == "dex".lower():
-                    lastWindow = "dex"
-    return lastWindow
+                    last_screen = "dex"
+    return last_screen
 
 def setPosition(path):
     positions = [i for i in range(1, 722, 52)]
@@ -70,7 +71,7 @@ def valueErrorFix(filePath):
 
 
 
-def checkGames():
+def check_games():
     anyTrue = False
     for key, value in logos.items():
         if value[2]:

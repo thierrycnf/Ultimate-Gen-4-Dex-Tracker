@@ -1,6 +1,6 @@
 import glob
 class Pokemon:
-    def __init__(self, dex, name, diamond, pearl, platinum, heartgold, soulsilver, caught, icon, grey, back):
+    def __init__(self, dex = None, name = None, diamond = None, pearl = None, platinum = None, heartgold = None, soulsilver = None, caught = None, icon = None, grey = None, back = None):
         self.dex = dex
         self.name = name
         self.diamond = diamond
@@ -45,6 +45,8 @@ class Pokemon:
                 # print("Equals!")
 
     def getFilterData(self):
+        #self.inDiamond = (self.diamond != "—")
+
         if self.diamond != '—':
             self.inDiamond = True
         else:
