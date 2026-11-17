@@ -1,8 +1,9 @@
-import openpyxl, setup, pokemon, os
+import openpyxl, setup, pokemon
 import customtkinter as ctk
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import *
+from customtkinter import *
 from PIL import Image, ImageTk
 from screen import Screen
 from theme import Theme
@@ -15,10 +16,11 @@ class DexApp:
     dex_app = None
 
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_theme = self.load_theme()
         self.position = setup.setPosition("position.txt")[0]
         self.last_position = setup.setPosition("position.txt")[1]
+        self.current_search = ""
 
         self.workbook = openpyxl.load_workbook("National Dex Guide 1.xlsx")
         self.sheet = self.workbook.active
@@ -36,6 +38,9 @@ class DexApp:
         self.up_arrow_button = self.down_arrow_button = self.left_arrow_button = self.right_arrow_button = None
         self.destroyed_up = self.destroyed_down = None
         self.checklist_label = self.dex_label = None
+        self.settings_button = None
+        self.filter_button = None
+        self.search_entry = None
         (self.labels, self.images, self.ctk_buttons, self.tk_buttons, self.ct_entries,
          self.checklist_widgets, self.dex_widgets) = [set() for _ in range(7)]
 
@@ -45,10 +50,11 @@ class DexApp:
         self.pokemon_on_screen = []
         self.pokemon_buttons = []
 
-    @staticmethod
-    def create_dex_app():
-        if DexApp.dex_app is None:
+    @classmethod
+    def create_dex_app(cls):
+        if cls.dex_app is None:
             DexApp.dex_app = DexApp()
+            print(type(DexApp.dex_app))
 
         return DexApp.dex_app
 
@@ -59,7 +65,7 @@ class DexApp:
 
         return Theme(theme) if theme in ["0","1","2","3"] else Theme.POKEBALL
 
-    def open_window(self, path):
+    def open_window(self, path: str) -> None:
         with open(path) as file:
             i = 0
             check = False
@@ -118,7 +124,7 @@ class DexApp:
         return loaded_pokemon
 
 
-    def grey(self, game):
+    def grey(self, game : str) -> None:
         if self.logos[game][2]:
             self.logo_buttons[game].config(image=self.logos[game][1])
             self.logos[game][2] = False
@@ -245,6 +251,9 @@ class DexApp:
             self.logos[key][1] = ImageTk.PhotoImage(resized_image2)
 
         def checklist() -> None:
+            self.current_screen = Screen.CHECKLIST
+            with open("lastscreen.txt", "w") as file:
+                file.write(Screen.CHECKLIST.value)
             self.checklist_label = tk.Label(self.main, text="Ultimate Checklist", font=("Pokémon DS Font", 30),
                                       bg=setup.primary[self.current_theme],
                                       fg=setup.secondary[self.current_theme])
@@ -262,7 +271,7 @@ class DexApp:
                                          borderwidth=0)
             right_arrow_button.place(relx=.9, rely=.1, anchor="e")
 
-            def scroll_up():
+            def scroll_up() -> None:
 
                 if self.position - self.pokemon_page < 0:
                     return
@@ -284,7 +293,7 @@ class DexApp:
 
                 display_mons()
 
-            def scroll_down():
+            def scroll_down() -> None:
                 if self.position + self.pokemon_page > self.total_pokemon:
                     return
                 self.position += self.pokemon_page
@@ -378,10 +387,10 @@ class DexApp:
 
             print(self.position)
 
-            def scroll_up_event(event):
+            def scroll_up_event(event) -> None:
                 scroll_up()
 
-            def scroll_down_event(event):
+            def scroll_down_event(event) -> None:
                 scroll_down()
 
             self.main.bind("<MouseWheel>", lambda e: scroll_up_event(e) if e.delta > 0 else scroll_down_event(e))
@@ -395,7 +404,7 @@ class DexApp:
             self.checklist_widgets.add(self.up_arrow_button)
             self.checklist_widgets.add(self.down_arrow_button)
 
-            def tick(dex):
+            def tick(dex : int) -> bool:
                 try:  # checking if the spreadsheet is open and if it is, give an error message
                     self.workbook.save("National Dex Guide 1.xlsx")
 
@@ -413,13 +422,186 @@ class DexApp:
                 self.workbook.save("National Dex Guide 1.xlsx")
                 return True
 
-            self.current_screen = Screen.CHECKLIST
-            with open("lastscreen.txt", "w") as file:
-                file.write(Screen.CHECKLIST.value)
-
         def dex() -> None:
+            self.current_screen = Screen.DEX
+            with open("lastscreen.txt", "w") as file:
+                file.write(Screen.DEX.value)
 
-            pass
+            self.pokemon_on_screen = []
+            self.pokemon_buttons = [None for _ in range(self.total_pokemon + 1)]
+
+            def check_search_text_file(path : str) -> None:
+                with open(path) as file:
+                    for line in file:
+                        self.search_entry.insert(0, line)
+
+            def write_to_search_text_file(path : str, search_string : str) -> None:
+                with open(path, "w") as file:
+                    file.write(search_string.lower())
+
+            def search(*args, start=1, dex_positions=None, page=0) -> None:  # OH MY FUCKING GOD I SOMEHOW MADE THIS WORK LMAO
+
+                final_pokemon, display_up_arrow, display_down_arrow = False, start != 1, False
+                final_pokemon = False
+                if dex_positions is None:
+                    dex_positions = [1]
+                if self.down_arrow_button:
+                    self.down_arrow_button.destroy()
+                    self.down_arrow_button = None
+
+                if self.up_arrow_button:
+                    self.up_arrow_button.destroy()
+                    self.up_arrow_button = None
+
+                try:
+                    if self.pokemon_on_screen:
+                        [mon.destroy() for mon in
+                         self.pokemon_on_screen]  # checking if there are any pokemon on screen, if there are then delete them
+                    self.pokemon_on_screen = []
+                    # print("test")
+                except AttributeError:
+                    pass
+
+                search_string = self.search_entry.get().title()  # get text from the search entry then turning first character capitalised and the
+                # rest lowercase because that's how the names are formatted in the spreadsheet
+                search_length = len(search_string)
+                # print(search in pokemon[1][1][:search_length+1])
+                # if search_string == "":
+                #     writeToSearchTextFile("search.txt", search_string)
+                #     try:
+                #         if self.pokemon_on_screen:
+                #             [mon.destroy() for mon in self.pokemon_on_screen]
+                #         self.pokemon_on_screen = []
+                #         # print("test")
+                #     except AttributeError:
+                #         pass
+                #
+                #     return
+                x, y = .1, .4
+
+                for i in range(start, 494):
+                    if ((setup.logos["d"][2] and self.loaded_pokemon[i].inDiamond) or (setup.logos["p"][2] and self.loaded_pokemon[i].inPearl) or 
+                        (setup.logos["pl"][2] and self.loaded_pokemon[i].inPlatinum) or (setup.logos["hg"][2] and self.loaded_pokemon[i].inHeartGold) or
+                        (setup.logos["ss"][2] and self.loaded_pokemon[i].inSoulSilver)):
+                        pass
+                    else:
+                        print(f"I skipped {self.loaded_pokemon[i].name}")
+                        continue
+                    try:
+                        if search_string in self.loaded_pokemon[i].name[
+                            :search_length + 1]:  # checks if the search_string matcheds with any pokemon names
+                            if final_pokemon:
+                                display_down_arrow = True
+                                break
+                            self.pokemon_buttons[i] = tk.Button(self.main, command=lambda dex=i: self.dex_entry_window(dex),
+                                                          image=self.loaded_pokemon[i].icon,
+                                                          bg=setup.primary[self.current_theme],
+                                                          activebackground=setup.primary[self.current_theme],
+                                                          highlightthickness=0, borderwidth=0)
+                            self.pokemon_on_screen.append(self.pokemon_buttons[i])
+                            # print(pokemon[i][1])
+                        elif search_string == str(self.loaded_pokemon[i].dex):  # this checks for the actual dex number
+                            if final_pokemon:
+                                display_down_arrow = True
+                                break
+                            self.pokemon_buttons[i] = tk.Button(self.main, command=lambda dex=i: self.dex_entry_window(dex),
+                                                          image=self.loaded_pokemon[i].icon,
+                                                          bg=setup.primary[self.current_theme],
+                                                          activebackground=setup.primary[self.current_theme],
+                                                          highlightthickness=0, borderwidth=0)
+                            self.pokemon_on_screen.append(self.pokemon_buttons[i])
+                            self.dex_widgets.add(self.pokemon_buttons[i])
+                        else:
+                            continue
+
+                    except TclError:
+                        continue
+
+                    self.checklist_widgets.add(self.pokemon_buttons[i])
+                    self.tk_buttons.add(self.pokemon_buttons[i])
+                    self.dex_widgets.add(self.pokemon_buttons[i])
+                    try:
+                        self.pokemon_buttons[i].place(relx=x, rely=y)
+                    except AttributeError:
+                        pass
+                    x += .06
+                    if x > .85:
+                        x = .1
+                        y += .2
+
+                    if y > .8:
+                        dex_positions.append(i + 1)
+                        final_pokemon = True
+                        continue
+
+
+
+                write_to_search_text_file("search.txt", search_string)
+                dex_positions = list(dict.fromkeys(dex_positions))
+
+                if display_down_arrow:
+                    self.down_arrow_button = tk.Button(self.main, image=self.down_arrows[self.current_theme], bg=setup.primary[self.current_theme],
+                                                activebackground=setup.primary[self.current_theme], highlightthickness=0,
+                                                borderwidth=0,
+                                                command=lambda: search(start=dex_positions[page + 1],
+                                                                       dex_positions=dex_positions, page=page + 1))
+                    self.down_arrow_button.place(relx=.99, rely=.7, anchor="e")
+
+                    print(display_down_arrow)
+
+                if display_up_arrow:
+                    self.up_arrow_button = tk.Button(self.main, image=self.up_arrows[self.current_theme], bg=setup.primary[self.current_theme],
+                                              activebackground=setup.primary[self.current_theme], highlightthickness=0,
+                                              borderwidth=0,
+                                              command=lambda: search(start=dex_positions[page - 1],
+                                                                     dex_positions=dex_positions, page=page - 1))
+                    self.up_arrow_button.place(relx=.99, rely=.4, anchor="e")
+
+                return
+
+            self.current_search = search
+
+            def scroll_search(event) -> None:
+                if event.delta < 0 and self.down_arrow_button:
+                    self.down_arrow_button.invoke()
+                elif event.delta > 0 and self.up_arrow_button:
+                    self.up_arrow_button.invoke()
+
+            self.main.bind("<MouseWheel>", scroll_search)
+            self.dex_label = tk.Label(self.main, text="Ultimate Pokédex", font=("Pokémon DS Font", 25),
+                                bg=setup.primary[self.current_theme],
+                                fg=setup.secondary[self.current_theme])
+            self.dex_label.place(relx=.5, rely=.1, anchor="center")
+
+            self.left_arrow_button = tk.Button(self.main, image=self.left_arrows[self.current_theme], command=switch_screen,
+                                        bg=setup.primary[self.current_theme], activebackground=setup.primary[self.current_theme],
+                                        highlightthickness=0,
+                                        borderwidth=0)
+            self.left_arrow_button.place(relx=.02, rely=.1, anchor="w")
+
+            self.settings_button = tk.Button(self.main, command=self.settings_window, image=self.settings_dict[self.current_theme],
+                                       bg=setup.primary[self.current_theme],
+                                       activebackground=setup.primary[self.current_theme], highlightthickness=0,
+                                       borderwidth=0)
+            self.settings_button.place(relx=.98, rely=.03, anchor="ne")
+
+            self.filter_button = tk.Button(self.main, command=self.filter_window, image=self.filters[self.current_theme],
+                                     bg=setup.primary[self.current_theme],
+                                     activebackground=setup.primary[self.current_theme], highlightthickness=0, borderwidth=0)
+
+            self.filter_button.place(relx=.8, rely=.25, anchor="center")
+
+            search_var = tk.StringVar()
+            search_var.trace_add("write", search)
+            self.search_entry = CTkEntry(self.main, placeholder_text="Enter Pokémon Name...", textvariable=search_var, width=250,
+                                   height=20, font=("Pokémon DS Font", 30), justify="center",
+                                   bg_color=setup.primary[self.current_theme],
+                                   fg_color=setup.secondary[self.current_theme])
+            self.search_entry.place(relx=.5, rely=.25, anchor="center")
+
+            search()
+
+
 
         def delete_screen() -> None:
             if self.current_screen == Screen.DEX:
@@ -436,7 +618,7 @@ class DexApp:
             else:
                 dex()
 
-        def resize_widgets(event):
+        def resize_widgets(event) -> None:
             width = self.main.winfo_width()
             height = self.main.winfo_height()
             font_size = max(12, int(height * 0.06))
@@ -453,7 +635,7 @@ class DexApp:
                 self.checklist_label.place(relx=.5, rely=.1, anchor="center", relwidth=0.5, relheight=0.5)
 
 
-        if self.current_screen == Screen.DEX:
+        if self.current_screen == Screen.DEX.value:
             dex()
         else:
             checklist()
@@ -462,8 +644,12 @@ class DexApp:
         self.main.mainloop()
     def settings_window(self) -> None:
         pass
+    
+    def dex_entry_window(self, dex : int) -> None:
+        pass
 
-
+    def filter_window(self) -> None:
+        pass
 
 
 
